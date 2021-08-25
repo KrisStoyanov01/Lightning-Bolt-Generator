@@ -2,19 +2,10 @@
 var maze = document.querySelector(".maze");
 var ctx = maze.getContext("2d");
 
-var topWallSpawnChance = 0.5;
-var leftWallSpawnChance = 0.5;
+var topWallSpawnChance = 0.45;
+var leftWallSpawnChance = 0.45;
 var cellSize = 20;
 
-function containsByXYU(array, cell){
-  for(var i = 0; i < array.length; i++){
-    if(array[i].rowIndex === cell.rowIndex && array[i].columnIndex === cell.columnIndex){
-      return true;
-    }
-  }
-
-  return false;
-}
 class Maze {
   constructor(rowCount, columnCount) {
     this.rowCount = rowCount;
@@ -43,6 +34,8 @@ class Maze {
         //if a valid maze cannot be created, the wall spawn chance is reduced and an alert is shown
       }
     }
+
+
   }
 
   isSolvable(generationCounter){
@@ -54,35 +47,47 @@ class Maze {
     currentIterationCells.push(this.grid[0][Math.floor(this.columnCount / 2)]);
 
     while(currentIterationCells.length > 0 && !pathFound){
+      //debugger
       for(var i = 0; i < currentIterationCells.length; i++){
         var currentCell = currentIterationCells[i];
+        var isThereValidNeighbour = false;
 
         //left neighbour check
-        if(!currentCell.hasLeftWall && currentCell.columnIndex !== 0 && !containsByXYU(currentCell.path, this.grid[currentCell.rowIndex][currentCell.columnIndex - 1])){
-          this.grid[currentCell.rowIndex][currentCell.columnIndex - 1].path.push(currentCell);
-          nextIterationCells.push(this.grid[currentCell.rowIndex][currentCell.columnIndex - 1]);
+        if(!currentCell.hasLeftWall && currentCell.columnIndex !== 0 ){
+          var neighbourCell = this.grid[currentCell.rowIndex][currentCell.columnIndex - 1];
+          if(!neighbourCell.isUsed){
+            processNeighbour(currentCell, neighbourCell, nextIterationCells);
+          }
         }
 
         //up neighbour check
-        if(!currentCell.hasTopWall && currentCell.rowIndex !== 0 && !containsByXYU(currentCell.path, this.grid[currentCell.rowIndex - 1][currentCell.columnIndex])){
-          this.grid[currentCell.rowIndex - 1][currentCell.columnIndex].path.push(currentCell);
-          nextIterationCells.push(this.grid[currentCell.rowIndex - 1][currentCell.columnIndex]);
+        if(!currentCell.hasTopWall && currentCell.rowIndex !== 0){
+          var neighbourCell = this.grid[currentCell.rowIndex - 1][currentCell.columnIndex];
+          if(!neighbourCell.isUsed){
+            processNeighbour(currentCell, neighbourCell, nextIterationCells);
+          }
         }
 
         //right neighbour check
-        if(currentCell.columnIndex !== this.columnCount - 1 && !this.grid[currentCell.rowIndex][currentCell.columnIndex + 1].hasLeftWall && !containsByXYU(currentCell.path, this.grid[currentCell.rowIndex][currentCell.columnIndex + 1])){
-          this.grid[currentCell.rowIndex][currentCell.columnIndex + 1].path.push(currentCell);
-          nextIterationCells.push(this.grid[currentCell.rowIndex][currentCell.columnIndex + 1]);
+        if(currentCell.columnIndex !== this.columnCount - 1 && !this.grid[currentCell.rowIndex][currentCell.columnIndex + 1].hasLeftWall){
+          var neighbourCell = this.grid[currentCell.rowIndex][currentCell.columnIndex + 1];
+          if(!neighbourCell.isUsed){
+            processNeighbour(currentCell, neighbourCell, nextIterationCells);
+          }
         }
-
+      
         //down neighbour check
-        if(currentCell.rowIndex !== this.rowCount - 1 && !this.grid[currentCell.rowIndex + 1][currentCell.columnIndex].hasTopWall && !containsByXYU(currentCell.path, this.grid[currentCell.rowIndex + 1][currentCell.columnIndex])){
-          this.grid[currentCell.rowIndex + 1][currentCell.columnIndex].path.push(currentCell);
-          nextIterationCells.push(this.grid[currentCell.rowIndex + 1][currentCell.columnIndex]);
+        if(currentCell.rowIndex !== this.rowCount - 1 && !this.grid[currentCell.rowIndex + 1][currentCell.columnIndex].hasTopWall){
+          var neighbourCell =  this.grid[currentCell.rowIndex + 1][currentCell.columnIndex];
+          if(!neighbourCell.isUsed){
+            processNeighbour(currentCell, neighbourCell, nextIterationCells);
+          }
         }
+        
 
         //check if lowest row is reached
         if(nextIterationCells[nextIterationCells.length - 1] !== undefined && nextIterationCells[nextIterationCells.length - 1].rowIndex === this.rowCount - 1){
+          //debugger
           pathFound = true;
         }
       }
@@ -94,7 +99,12 @@ class Maze {
     }
     //if lowest row is reached, than we have a path and the maze is valid
     if(pathFound){
-      this.solution = nextIterationCells[nextIterationCells.length - 1].path;
+      //debugger
+      var finalCell = nextIterationCells[nextIterationCells.length - 1];
+      for(var i = 0; i < finalCell.path.length; i++){
+        this.solution.push(finalCell.path[i]);
+      }
+      this.solution.push(finalCell);
       return true;
     }else{
       return false;
@@ -107,7 +117,7 @@ class Maze {
     for (var rowIndex = 0; rowIndex < this.rowCount; rowIndex++) {
       var row = [];
       for (var columnIndex = 0; columnIndex < this.columnCount; columnIndex++) {
-        var cell = new Cell(rowIndex, columnIndex, this.width, this.height, this.grid);
+        var cell = new Cell(rowIndex, columnIndex, this.width, this.height);
         row.push(cell);
       }
       this.grid.push(row);
@@ -127,29 +137,26 @@ class Maze {
       }
     }
   }
-}
 
-//wallPercentage is decimal between 0 and 1
-function createWall(wallSpawnChance){
-  var random = Math.random();
-  if(random <= wallSpawnChance){
-    return true;
-  }else{ 
-    return false;
+  flashSolution(){
+    //debugger
+    for(var i = 0; i < this.solution.length; i++){
+      this.solution[i].flashCell();
+    }
   }
 }
 
 class Cell {
-  constructor(rowIndex, columnIndex, width, height, parentGrid) {
+  constructor(rowIndex, columnIndex, width, height) {
     this.rowIndex = rowIndex;
     this.columnIndex = columnIndex;
     this.width = width;
     this.height = height;
     //this path is the current path(also the shortest) used to reach this cell
     this.path = [];
+    this.used = false;
     rowIndex === 0 ? this.hasTopWall = true : this.hasTopWall = createWall(topWallSpawnChance);
     columnIndex === 0 ? this.hasLeftWall = true : this.hasLeftWall = createWall(leftWallSpawnChance);  
-    this.parentGrid = parentGrid;
   }
 
   drawTopWall(x, y, height, columnCount) {
@@ -166,10 +173,10 @@ class Cell {
     ctx.stroke();
   }
 
-  //draws cell
+  //draws cell(actually draws just )
   show(rowCount, columnCount) {
-    var x = this.columnIndex * this.width / columnCount;
-    var y = this.rowIndex * this.height / rowCount;
+    var x = this.columnIndex * cellSize;
+    var y = this.rowIndex * cellSize;
     
     ctx.strokeStyle = 'white';
     ctx.fillStyle = 'black';
@@ -177,6 +184,41 @@ class Cell {
     if (this.hasTopWall) this.drawTopWall(x, y, this.height, columnCount);
     if (this.hasLeftWall) this.drawLeftWall(x, y, this.width, rowCount);
   }
+
+  flashCell(){
+    var x = this.columnIndex * cellSize;
+    var y = this.rowIndex * cellSize;
+    
+    ctx.fillStyle = 'red';
+    //ctx.fillRect(x, y, x + cellSize - 3, y + cellSize - 3);
+    ctx.fillRect(x + 5, y + 5, 10, 10);
+
+  }
+}
+
+//wallPercentage is decimal between 0 and 1
+function createWall(wallSpawnChance){
+  var random = Math.random();
+  if(random <= wallSpawnChance){
+    return true;
+  }
+  return false;
+}
+
+//this executes everytime when we find a valid neighbour
+function processNeighbour(currentCell, neighbourCell, nextIterationCells){
+  currentCell.isUsed = true;
+  neighbourCell.isUsed = true;
+
+  for(var i = 0; i < currentCell.path.length; i++){
+    neighbourCell.path.push(currentCell.path[i]);
+  }
+  neighbourCell.path.push(currentCell);
+  nextIterationCells.push(neighbourCell);
+}
+
+function loadSolution() {
+  newMaze.flashSolution();
 }
 
 //make the first parameter larger than the second one if you want a "lightning effect"
