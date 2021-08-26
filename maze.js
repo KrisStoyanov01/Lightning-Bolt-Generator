@@ -3,8 +3,8 @@ var maze = document.querySelector(".maze");
 var ctx = maze.getContext("2d");
 
 var topWallSpawnChance = 0.45;
-var leftWallSpawnChance = 0.45;
-var cellSize = 20;
+var leftWallSpawnChance = 0.5;
+var cellSize = 15;
 
 class Maze {
   constructor(rowCount, columnCount) {
@@ -42,7 +42,7 @@ class Maze {
     var currentIterationCells = [];
     var nextIterationCells = [];
     var pathFound = false;
-
+    //debugger
     //initializes first cell - in the middle of top row
     currentIterationCells.push(this.grid[0][Math.floor(this.columnCount / 2)]);
 
@@ -50,45 +50,37 @@ class Maze {
       //debugger
       for(var i = 0; i < currentIterationCells.length; i++){
         var currentCell = currentIterationCells[i];
-        var isThereValidNeighbour = false;
 
         //left neighbour check
         if(!currentCell.hasLeftWall && currentCell.columnIndex !== 0 ){
           var neighbourCell = this.grid[currentCell.rowIndex][currentCell.columnIndex - 1];
-          if(!neighbourCell.isUsed){
-            processNeighbour(currentCell, neighbourCell, nextIterationCells);
+          if(!neighbourCell.isUsed  && !pathFound){
+            pathFound = processNeighbour(currentCell, neighbourCell, nextIterationCells, pathFound, this.rowCount);
           }
         }
 
         //up neighbour check
         if(!currentCell.hasTopWall && currentCell.rowIndex !== 0){
           var neighbourCell = this.grid[currentCell.rowIndex - 1][currentCell.columnIndex];
-          if(!neighbourCell.isUsed){
-            processNeighbour(currentCell, neighbourCell, nextIterationCells);
+          if(!neighbourCell.isUsed  && !pathFound){
+            pathFound = processNeighbour(currentCell, neighbourCell, nextIterationCells, pathFound, this.rowCount);
           }
         }
 
         //right neighbour check
         if(currentCell.columnIndex !== this.columnCount - 1 && !this.grid[currentCell.rowIndex][currentCell.columnIndex + 1].hasLeftWall){
           var neighbourCell = this.grid[currentCell.rowIndex][currentCell.columnIndex + 1];
-          if(!neighbourCell.isUsed){
-            processNeighbour(currentCell, neighbourCell, nextIterationCells);
+          if(!neighbourCell.isUsed && !pathFound){
+            pathFound = processNeighbour(currentCell, neighbourCell, nextIterationCells, pathFound, this.rowCount);
           }
         }
       
         //down neighbour check
         if(currentCell.rowIndex !== this.rowCount - 1 && !this.grid[currentCell.rowIndex + 1][currentCell.columnIndex].hasTopWall){
           var neighbourCell =  this.grid[currentCell.rowIndex + 1][currentCell.columnIndex];
-          if(!neighbourCell.isUsed){
-            processNeighbour(currentCell, neighbourCell, nextIterationCells);
+          if(!neighbourCell.isUsed  && !pathFound){
+            pathFound = processNeighbour(currentCell, neighbourCell, nextIterationCells, pathFound, this.rowCount);
           }
-        }
-        
-
-        //check if lowest row is reached
-        if(nextIterationCells[nextIterationCells.length - 1] !== undefined && nextIterationCells[nextIterationCells.length - 1].rowIndex === this.rowCount - 1){
-          //debugger
-          pathFound = true;
         }
       }
       if(!pathFound){
@@ -189,7 +181,7 @@ class Cell {
     var x = this.columnIndex * cellSize;
     var y = this.rowIndex * cellSize;
     
-    ctx.fillStyle = 'red';
+    ctx.fillStyle = 'yellow';
     //ctx.fillRect(x, y, x + cellSize - 3, y + cellSize - 3);
     ctx.fillRect(x + 5, y + 5, 10, 10);
 
@@ -206,7 +198,7 @@ function createWall(wallSpawnChance){
 }
 
 //this executes everytime when we find a valid neighbour
-function processNeighbour(currentCell, neighbourCell, nextIterationCells){
+function processNeighbour(currentCell, neighbourCell, nextIterationCells, pathFound, rowCount){
   currentCell.isUsed = true;
   neighbourCell.isUsed = true;
 
@@ -215,6 +207,12 @@ function processNeighbour(currentCell, neighbourCell, nextIterationCells){
   }
   neighbourCell.path.push(currentCell);
   nextIterationCells.push(neighbourCell);
+
+  //check if lowest row is reached
+  if(nextIterationCells[nextIterationCells.length - 1] !== undefined && nextIterationCells[nextIterationCells.length - 1].rowIndex === rowCount - 1){
+    return true;
+  }
+  return false;
 }
 
 function loadSolution() {
@@ -222,5 +220,5 @@ function loadSolution() {
 }
 
 //make the first parameter larger than the second one if you want a "lightning effect"
- let newMaze = new Maze(30, 20);
+ let newMaze = new Maze(40, 20);
  newMaze.setup();
