@@ -3,8 +3,13 @@ var maze = document.querySelector(".maze");
 var ctx = maze.getContext("2d");
 
 var topWallSpawnChance = 0.45;
-var leftWallSpawnChance = 0.5;
-var cellSize = 15;
+var leftWallSpawnChance = 0.45;
+
+var resources = loadResources();
+
+var rowCount = resources['rowCount'];
+var columnCount = resources['columnCount'];
+var cellSize = resources['cellSize'];
 
 class Maze {
   constructor(rowCount, columnCount) {
@@ -26,7 +31,7 @@ class Maze {
       this.generateMaze();
       
       generationCounter++;
-      if(generationCounter > 20){
+      if(generationCounter > 50){
         alert("Problem generating maze, reducing wall spawn chance!");
         generationCounter = 0;
         topWallSpawnChance = topWallSpawnChance - 0.05;
@@ -170,7 +175,7 @@ class Cell {
     var x = this.columnIndex * cellSize;
     var y = this.rowIndex * cellSize;
     
-    ctx.strokeStyle = 'white';
+    ctx.strokeStyle = 'black';
     ctx.fillStyle = 'black';
     ctx.lineWidth = 2;
     if (this.hasTopWall) this.drawTopWall(x, y, this.height, columnCount);
@@ -183,7 +188,7 @@ class Cell {
     
     ctx.fillStyle = 'yellow';
     //ctx.fillRect(x, y, x + cellSize - 3, y + cellSize - 3);
-    ctx.fillRect(x + 5, y + 5, 10, 10);
+    ctx.fillRect(x, y, cellSize, cellSize);
 
   }
 }
@@ -219,6 +224,49 @@ function loadSolution() {
   newMaze.flashSolution();
 }
 
-//make the first parameter larger than the second one if you want a "lightning effect"
- let newMaze = new Maze(40, 20);
- newMaze.setup();
+function loadResources(){
+  var rowCountSlider = document.getElementById("rowCount"); 
+  var columnCountSlider = document.getElementById("columnCount"); 
+  var cellSizeSlider = document.getElementById("cellSize"); 
+
+  var rowCountOutput = document.getElementById("rowCountOutput");
+  var columnCountOutput = document.getElementById("columnCountOutput");
+  var cellSizeOutput = document.getElementById("cellSizeOutput");
+
+  var rowCount = rowCountSlider.value;
+  var columnCount = columnCountSlider.value;
+  var cellSize = cellSizeSlider.value;
+
+  rowCountOutput.innerHTML = rowCount;
+  columnCountOutput.innerHTML = columnCount;
+  cellSizeOutput.innerHTML = cellSize;
+
+  rowCountSlider.oninput = function() {
+    rowCountOutput.innerHTML = this.value;
+  }
+
+  columnCountSlider.oninput = function() {
+    columnCountOutput.innerHTML = this.value;
+  }
+
+  cellSizeSlider.oninput = function() {
+    cellSizeOutput.innerHTML = this.value;
+  }
+  return {"rowCount": rowCount, "columnCount": columnCount, "cellSize": cellSize}
+}
+
+function loadNew(){
+  //make the first parameter larger than the second one if you want a "lightning effect"
+  resources = loadResources();
+
+  rowCount = resources['rowCount'];
+  columnCount = resources['columnCount'];
+  cellSize = resources['cellSize'];
+  
+  newMaze = new Maze(rowCount, columnCount);
+  newMaze.setup();
+  loadSolution();
+  return newMaze;
+}
+
+var newMaze = loadNew();

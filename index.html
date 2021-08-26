@@ -3,13 +3,36 @@
     <head>
         <meta charset = "UTF-8"/>
         <meta name = "viewport" content = "width=device-width, initial-scale=1.0"/>
+        <link rel="stylesheet" href="style.css" />
         <title>Maze</title>
     </head>
     <body>
-        <canvas class = "maze"></canvas>
-
-        <script src = "maze.js"></script>
-
-        <button onclick="setTimeout(loadSolution, 1000)">Load Solution</button>
+        <div>
+            <div class="visualized">
+                <div>
+                    <button onclick="setTimeout(loadNew, 1000)">Generate New Lightning!</button>
+                </div>  
+                <div>
+                    <button onclick="setTimeout(loadSolution, 1000)">Generate Again(test purposes)!</button>                              
+                </div>
+                <div class="slidecontainer">
+                    <p>Row Count: <span id="rowCountOutput"></span></p>
+                    <input type="range" min="1" max="600" value="80" class="slider" id="rowCount">
+                </div>
+                <div class="slidecontainer">
+                    <p>Column Count: <span id="columnCountOutput"></span></p>
+                  <input type="range" min="1" max="300" value="40" class="slider" id="columnCount">
+                </div>
+                <div class="slidecontainer">
+                  <p>Cell Size: <span id="cellSizeOutput"></span></p>
+                  <input type="range" min="1" max="20" value="5" class="slider" id="cellSize">
+                </div>
+            </div>
+            
+            <div class="visualized">
+                <canvas class = "maze"></canvas>
+                <script src = "maze.js"></script>
+            </div>
+        </div>
 </body>
 </html>
